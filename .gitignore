@@ -1,0 +1,12 @@
+node_modules
+/android/.gradle/
+/android/.idea/
+/android/app/build/
+/android/app/release/
+/android/build/
+/ios/build/
+/ios/Pods/
+/ios/Podfile.lock
+/.idea/
+/.vscode/
+/__tests__/
