@@ -22,153 +22,38 @@ import { nodePostRequest } from "../../Utils/API";
 import { global_storage } from "../../Utils/Utils";
 import { useMMKVStorage } from "react-native-mmkv-storage";
 import socketService from "../../socket/socket"; // Import the socket service
+import GoLiveController from "../../controllers/GoLiveController";
 
 const GoLive = () => {
   const ref = React.useRef(null);
-  const [user, setUser] = useMMKVStorage("USER", global_storage);
-  const [streaming, setStreaming] = React.useState(false);
-  const [isMuted, setIsMuted] = React.useState(false);
-  const [cameraMode, setCameraMode] = React.useState("back");
-  const [hd, setHd] = React.useState(true);
-  const [flash, setFlash] = React.useState(false);
-  const [turnOnCamera, setTurnOnCamera] = React.useState(false);
-  const [thumbnail, setThumbnail] = React.useState(null);
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [comment, setComment] = React.useState("");
-  const [comments, setComments] = React.useState([]);
+  const controller = GoLiveController.useGoLiveController(ref);
+  const {
+    streamingData,
+    streaming,
+    title,
+    description,
+    setTitle,
+    setDescription,
+    thumbnail,
+    setThumbnail,
+    comment,
+    setComment,
+    comments,
+    setComments,
+    onStream,
+    isMuted,
+    setIsMuted,
+    cameraMode,
+    setCameraMode,
+    hd,
+    setHd,
+    socketService,
+    eventHandlers,
+    videoProps,
+    audioProps,
+    onPermissionsDenied,
+  } = controller;
 
-  useEffect(() => {
-    // const socket = socketService.connect();
-    // socketService.onComment((data) => {
-    //   setComments((prevComments) => [...prevComments, data]);
-    // });
-    // socketService.onViewerJoined((data) => {
-    //   console.log("Viewer joined:", data);
-    // });
-    // socketService.onViewerLeft((data) => {
-    //   console.log("Viewer left:", data);
-    // });
-    // return () => {
-    //   socketService.leaveStream(user.id);
-    //   socketService.disconnect({ streamId: user.id });
-    // };
-  }, []);
-
-  useEffect(() => {
-    console.log("useEffect ref ", ref);
-    return () => {
-      if (streaming) {
-        setStreaming(false);
-        ref?.current?.stopPreview();
-      }
-    };
-  }, [ref]);
-
-  const videoProps = {
-    fps: 30,
-    resolution: "720p",
-    bitrate: 1 * 1024 * 1024, // 2 Mbps
-    gopDuration: 1, // 1 second
-  };
-
-  const audioProps = {
-    bitrate: 128000,
-    sampleRate: 44100,
-    isStereo: true,
-  };
-
-  const setTorch = (value) => {
-    setFlash(value);
-  };
-
-  const eventHandlers = {
-    onConnectionSuccess: () => {
-      console.log("onConnectionSuccess");
-    },
-    onConnectionFailed: (e) => {
-      console.log("onConnectionFailed", e);
-    },
-    onDisconnect: () => {
-      console.log("onDisconnect");
-    },
-  };
-
-  const onStream = () => {
-    console.log("onStream ref ", ref);
-    if (!turnOnCamera) {
-      setTurnOnCamera(true);
-    } else console.log(ref.current);
-    if (!streaming) {
-      // ref.current.startStreaming(
-      //   "wmae-h0v1-z71y-w750-62mz",
-      //   "rtmp://a.rtmp.youtube.com/live2"
-      // );
-      // ref.current.startStreaming("testing4", "rtmp://192.168.39.119:1935/live");
-
-      handleGoLiveApi();
-    } else {
-      // ref.current.startStreaming("testing4", "rtmp://192.168.39.119:1935/live");
-      // ref.current.startStreaming(
-      //   "wmae-h0v1-z71y-w750-62mz",
-      //   "rtmp://a.rtmp.youtube.com/live2"
-      // );
-
-      handleStopLiveApi();
-    }
-  };
-
-  const onPermissionsDenied = () => {
-    console.log("onPermissionsDenied");
-  };
-
-  const handleGoLiveApi = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("id", user.id);
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("thumbnail", {
-        name: "image",
-        type: "image/jpeg",
-        uri: thumbnail?.uri,
-      });
-      console.log(
-        "handleGoLiveApi formData : ",
-        JSON.stringify({
-          name: "image",
-          type: "image/jpeg",
-          uri: thumbnail?.uri,
-        })
-      );
-      const respone = await nodePostRequest("streaming/start", formData, true);
-      console.log("GoLive ", "Response : ", respone);
-      if (respone.status) {
-        setStreaming(true);
-      } else {
-        Alert.alert("Error", respone.message);
-      }
-    } catch (error) {
-      console.log("GoLive ", "Error : ", error);
-      Alert.alert("Error", error.message);
-    }
-  };
-  const handleStopLiveApi = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("id", user.id);
-      const respone = await nodePostRequest("streaming/stop", formData, true);
-      console.log("GoLive ", "Response : ", respone);
-      if (respone.status) {
-        setStreaming(false);
-      } else {
-        Alert.alert("Error", respone.message);
-      }
-    } catch (error) {
-      console.log("GoLive ", "Error : ", error);
-      Alert.alert("Error", error.message);
-    }
-  };
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -180,7 +65,7 @@ const GoLive = () => {
         isMuted={isMuted}
         camera={cameraMode}
         enablePinchedZoom={true}
-        video={hd ? videoProps : { ...videoProps, resolution: "1080p" }}
+        video={videoProps}
         audio={audioProps}
         {...eventHandlers} // Spread event handler props
       />
@@ -260,9 +145,7 @@ const GoLive = () => {
         </View>
       )}
       <Button
-        title={
-          !turnOnCamera ? "Turn On Camera" : streaming ? "Stop" : "Go Live"
-        }
+        title={streamingData ? "Go Live" : "Create Live Stream"}
         onPress={onStream}
         style={styles.button}
         titleStyle={styles.buttonTitle}

@@ -1,10 +1,10 @@
 const TAG = "API.js";
 const BASE_URL =
-  "https://multivendorv3.freelanceworking.site/apis/public/api/vendor/";
+  "https://multivendor.freelancedemo.site/apis/public/api/vendor/";
 export const IMAGE_B_URL =
-  "http://multivendorv3.freelanceworking.site/apis/public/images/";
+  "https://multivendor.freelancedemo.site/apis/public/images/";
 
-export const NODE_URL = "http://192.168.5.117:3000/";
+export const NODE_URL = "http://13.48.147.251:3000/";
 const nodeGetRequest = async (endPoint: string) => {
   try {
     const headers: any = {
@@ -18,6 +18,8 @@ const nodeGetRequest = async (endPoint: string) => {
     });
 
     if (!response.ok) {
+      let json = response.json();
+      console.log(TAG, "GET Request Error:", json);
       throw new Error(response.statusText || "Request failed");
     }
 
@@ -84,7 +86,7 @@ export const getCustomerRequest = async (endPoint: string) => {
     };
 
     const response = await fetch(
-      "http://multivendorv3.freelanceworking.online/apis/public/api/customer/" +
+      "https://multivendor.freelancedemo.site/apis/public/api/customer/" +
         endPoint,
       {
         method: "GET",
@@ -93,6 +95,7 @@ export const getCustomerRequest = async (endPoint: string) => {
     );
 
     if (!response.ok) {
+      console.log(TAG, "GET Request Error:", response.status);
       throw new Error(response.statusText || "Request failed");
     }
 
