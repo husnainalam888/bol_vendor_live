@@ -23,10 +23,12 @@ import { global_storage } from "../../Utils/Utils";
 import { useMMKVStorage } from "react-native-mmkv-storage";
 import socketService from "../../socket/socket"; // Import the socket service
 import GoLiveController from "../../controllers/GoLiveController";
-
+import { NodePublisher } from "react-native-nodemediaclient";
+import ViewersModal from "../../Components/ViewersModal";
 const GoLive = () => {
   const ref = React.useRef(null);
-  const controller = GoLiveController.useGoLiveController(ref);
+  const commentRef = React.useRef(null);
+  const controller = GoLiveController.useGoLiveController(ref, commentRef);
   const {
     streamingData,
     streaming,
@@ -52,13 +54,20 @@ const GoLive = () => {
     videoProps,
     audioProps,
     onPermissionsDenied,
+    torchEnable,
+    user,
+    viwers,
+    setViwers,
+    showViewers,
+    setShowViewers,
+    stopStream,
   } = controller;
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <ApiVideoLiveStreamView
+      {/* <ApiVideoLiveStreamView
         onPermissionsDenied={onPermissionsDenied}
         style={styles.liveStreamView}
         ref={ref}
@@ -68,29 +77,99 @@ const GoLive = () => {
         video={videoProps}
         audio={audioProps}
         {...eventHandlers} // Spread event handler props
+      /> */}
+      {/* <NodePublisher
+        ref={ref}
+        style={styles.liveStreamView}
+        url={`${"rtmp://13.48.147.251:1935/live/" + streamingData?.key}`}
+        audioParam={{
+          codecid: NodePublisher.NMC_CODEC_ID_AAC,
+          profile: NodePublisher.NMC_PROFILE_AUTO,
+          samplerate: 48000,
+          channels: 1,
+          bitrate: 64 * 1000,
+        }}
+        videoParam={{
+          codecid: NodePublisher.NMC_CODEC_ID_H264,
+          profile: NodePublisher.NMC_PROFILE_AUTO,
+          width: 720,
+          height: 1280,
+          fps: 30,
+          bitrate: 1000 * 1000,
+        }}
+        frontCamera={cameraMode === "front"}
+        HWAccelEnable={true}
+        denoiseEnable={true}
+        torchEnable={torchEnable}
+        keyFrameInterval={2}
+        volume={isMuted ? 0.0 : 1.0}
+        videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
+      /> */}
+      <NodePublisher
+        ref={ref}
+        style={styles.liveStreamView}
+        url={`${"rtmp://192.168.195.206:1935/live/" + streamingData?.key}`}
+        audioParam={{
+          codecid: NodePublisher.NMC_CODEC_ID_AAC,
+          profile: NodePublisher.NMC_PROFILE_AUTO,
+          samplerate: 48000, // Keep audio quality acceptable
+          channels: 1,
+          bitrate: 32 * 1000, // Lower audio bitrate for reduced bandwidth
+        }}
+        videoParam={{
+          codecid: NodePublisher.NMC_CODEC_ID_H264,
+          profile: NodePublisher.NMC_PROFILE_AUTO,
+          width: 360, // Reduce video width (e.g., 360px)
+          height: 640, // Reduce video height (e.g., 640px)
+          fps: 15, // Lower frame rate for smoother streaming with low bandwidth
+          bitrate: 300 * 1000, // Significantly reduce video bitrate (e.g., 300 Kbps)
+        }}
+        frontCamera={cameraMode === "front"}
+        HWAccelEnable={true}
+        denoiseEnable={true}
+        torchEnable={torchEnable}
+        keyFrameInterval={2}
+        volume={isMuted ? 0.0 : 1.0}
+        videoOrientation={NodePublisher.VIDEO_ORIENTATION_PORTRAIT}
       />
+      <View style={styles.overlay} />
 
-      <View style={styles.buttonContainer}>
-        <SvgFromXml
-          onPress={() => setHd(!hd)}
-          xml={SVG[hd ? "hd" : "fhd"]}
-          height={24}
-          width={24}
-        />
-        <SvgFromXml
-          onPress={() => setIsMuted(!isMuted)}
-          xml={SVG[isMuted ? "micOn" : "micOff"]}
-          height={24}
-          width={24}
-        />
+      {streaming && (
         <TouchableOpacity
-          onPress={() =>
-            setCameraMode(cameraMode === "back" ? "front" : "back")
-          }
+          onPress={() => setShowViewers(true)}
+          style={styles.viwers}
         >
-          <SvgFromXml xml={SVG.cameraSwitch} height={24} width={24} />
+          <Text style={styles.viwersText}>
+            {viwers?.length} {"Watching"}
+          </Text>
+          <SvgFromXml xml={SVG.showEyeWhite} height={24} width={24} />
         </TouchableOpacity>
+      )}
+
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <View style={styles.buttonContainer}>
+          <SvgFromXml
+            onPress={() => setHd(!hd)}
+            xml={SVG[hd ? "hd" : "fhd"]}
+            height={24}
+            width={24}
+          />
+          <SvgFromXml
+            onPress={() => setIsMuted(!isMuted)}
+            xml={SVG[isMuted ? "micOn" : "micOff"]}
+            height={24}
+            width={24}
+          />
+          <TouchableOpacity
+            onPress={() =>
+              setCameraMode(cameraMode === "back" ? "front" : "back")
+            }
+          >
+            <SvgFromXml xml={SVG.cameraSwitch} height={24} width={24} />
+          </TouchableOpacity>
+        </View>
       </View>
+
       {!streaming ? (
         <>
           <ImagePicker selected={thumbnail?.uri} onSelect={setThumbnail} />
@@ -114,7 +193,7 @@ const GoLive = () => {
         </>
       ) : (
         <View>
-          <CommentList />
+          <CommentList data={comments} ref={commentRef} />
           <View style={styles.commentField}>
             <TextInput
               style={styles.comment}
@@ -126,16 +205,19 @@ const GoLive = () => {
             />
             {comment.trim().length > 0 && (
               <Text
-                onPress={() =>
+                onPress={() => {
+                  console.log("sendComment() : data ", {
+                    streamId: streamingData.key,
+                    userId: global_storage.getMap("USER").mongo_id,
+                    commentText: comment,
+                  });
                   socketService.sendComment({
-                    streamId: user.id,
-                    userId: null,
-                    username: user.name,
-                    vendorId: user.id,
-                    image: user.image,
-                    comment,
-                  })
-                }
+                    streamId: streamingData.key,
+                    userId: global_storage.getMap("USER").mongo_id,
+                    commentText: comment,
+                  });
+                  setComment("");
+                }}
                 style={styles.send}
               >
                 Send
@@ -144,11 +226,26 @@ const GoLive = () => {
           </View>
         </View>
       )}
-      <Button
-        title={streamingData ? "Go Live" : "Create Live Stream"}
-        onPress={onStream}
-        style={styles.button}
-        titleStyle={styles.buttonTitle}
+      {!streaming && (
+        <Button
+          title={streamingData ? "Go Live" : "Create Live Stream"}
+          onPress={onStream}
+          style={styles.button}
+          titleStyle={styles.buttonTitle}
+        />
+      )}
+      {streaming && (
+        <Button
+          title={"Stop"}
+          onPress={stopStream}
+          style={styles.stopButton}
+          titleStyle={styles.stopButtonTitle}
+        />
+      )}
+      <ViewersModal
+        visible={showViewers}
+        setVisible={setShowViewers}
+        data={viwers}
       />
     </View>
   );
@@ -210,10 +307,12 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   buttonContainer: {
-    flex: 1,
     justifyContent: "center",
     alignSelf: "flex-end",
     gap: 20,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.1)",
   },
   streamingButton: {
     borderRadius: 50,
@@ -270,11 +369,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 16,
     marginBottom: 10,
+    paddingEnd: 10,
+    borderRadius: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   comment: {
     flex: 1,
     color: "white",
     fontSize: 14,
+    padding: 10,
   },
   send: {
     color: "white",
@@ -285,5 +388,36 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 10,
     marginLeft: 10,
+  },
+  viwers: {
+    position: "absolute",
+    top: 20,
+    left: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 5,
+    borderRadius: 5,
+    flexDirection: "row",
+    gap: 5,
+    paddingHorizontal: 10,
+  },
+  viwersText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.2)",
+  },
+  stopButton: {
+    backgroundColor: "red",
+    padding: 10,
+  },
+  stopButtonTitle: {
+    color: "white",
   },
 });

@@ -1,6 +1,7 @@
 // socket.js
 import io from "socket.io-client";
 import { NODE_URL } from "../Utils/API";
+import { global_storage } from "../Utils/Utils";
 
 class SocketService {
   constructor() {
@@ -14,19 +15,17 @@ class SocketService {
 
   joinStream(streamId) {
     if (this.socket) {
-      this.socket.emit("join-stream", streamId);
+      this.socket.emit(
+        "join-stream",
+        streamId,
+        global_storage.getMap("USER").mongo_id
+      );
     }
   }
 
   leaveStream(streamId) {
     if (this.socket) {
       this.socket.emit("leave-stream", streamId);
-    }
-  }
-
-  onComment(callback) {
-    if (this.socket) {
-      this.socket.on("comment", callback);
     }
   }
 
@@ -45,6 +44,14 @@ class SocketService {
   sendComment(data) {
     if (this.socket) {
       this.socket.emit("new-comment", data);
+      console.log("sendComment() : data ", data);
+    }
+  }
+
+  onComment(callback) {
+    if (this.socket) {
+      console.log("onComment() listening...");
+      this.socket.on("new-comment-received", callback);
     }
   }
 
@@ -52,6 +59,11 @@ class SocketService {
     if (this.socket) {
       this.socket.emit("stop-stream", id);
       this.socket.disconnect();
+    }
+  }
+  onStreamEnded(callback) {
+    if (this.socket) {
+      this.socket.on("stream-ended", callback);
     }
   }
 }

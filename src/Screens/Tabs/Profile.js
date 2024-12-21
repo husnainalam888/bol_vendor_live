@@ -43,7 +43,16 @@ const Profile = ({ navigation }) => {
         setUser(respone.data);
         setName(respone.data.name);
         setImge({ uri: IMAGE_B_URL + respone.data.image });
-        nodePostRequest("auth/vendor/login", { ...respone.data, id: user.id });
+        nodePostRequest("auth/vendor/login", {
+          ...respone.data,
+          id: user.id,
+        }).then((res) => {
+          console.log("nodePostRequest data", res);
+          setUser({
+            ...respone.data,
+            mongo_id: res.data._id,
+          });
+        });
       }
     } catch (error) {
       setIsLoading(false);

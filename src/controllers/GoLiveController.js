@@ -4,6 +4,8 @@ import { nodePostRequest } from "../Utils/API";
 import { global_storage } from "../Utils/Utils";
 import { useMMKVStorage } from "react-native-mmkv-storage";
 import socketService from "../socket/socket";
+import requestCameraAndMicPermissions from "./CameraPermissions";
+import { useNavigation } from "@react-navigation/native";
 const TAG = "GoLiveController";
 class GoLiveController {
   constructor() {
@@ -11,22 +13,27 @@ class GoLiveController {
     this.streamStatus = false;
     this.socket = null;
     this.ref = null;
+    this.commentRef = null;
   }
 
-  useGoLiveController = (ref) => {
+  useGoLiveController = (ref, commentRef) => {
     this.ref = ref;
+    this.commentRef = commentRef;
+    const navigation = useNavigation();
+    const [showViewers, setShowViewers] = useState(false);
     const [user, setUser] = useMMKVStorage("USER", global_storage);
     const [streaming, setStreaming] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
     const [cameraMode, setCameraMode] = useState("back");
     const [hd, setHd] = useState(true);
-    const [flash, setFlash] = useState(false);
+    const [torchEnable, setFlash] = useState(false);
     const [thumbnail, setThumbnail] = useState(null);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [comment, setComment] = useState("");
     const [comments, setComments] = useState([]);
     const [streamingData, setStreamingData] = useState(null);
+    const [viwers, setViwers] = useState([]);
     const videoProps = {
       fps: 30,
       resolution: "720p",
@@ -40,55 +47,67 @@ class GoLiveController {
     };
     this.user = user;
 
-    // useEffect(() => {
-    //   this.socket = socketService.connect();
-    //   socketService.onComment((data) => {
-    //     setComments((prevComments) => [...prevComments, data]);
-    //   });
-    //   socketService.onViewerJoined((data) => {
-    //     console.log("Viewer joined:", data);
-    //   });
-    //   socketService.onViewerLeft((data) => {
-    //     console.log("Viewer left:", data);
-    //   });
+    useEffect(() => {
+      this.socket = socketService.connect();
+      requestCameraAndMicPermissions();
+      socketService.onComment((data) => {
+        console.log("New comment  Received : ", data);
+        const newComments = [data, ...comments];
+        setComments((prevComments) => [data, ...prevComments]);
+        commentRef.current?.scrollToOffset({
+          animated: true,
+          offset: 0,
+        });
+      });
+      socketService.onViewerJoined((data) => {
+        console.log("Viewer joined:", data);
+        setViwers((prevViwers) => {
+          const alreadyExist = prevViwers.find((item) => item._id == data._id);
+          if (!alreadyExist) {
+            return [...prevViwers, data];
+          }
+          return prevViwers;
+        });
+      });
+      socketService.onViewerLeft((data) => {
+        console.log("Viewer left:", data);
+        setViwers((prevViwers) =>
+          prevViwers.filter((item) => item._id != data._id)
+        );
+      });
+      socketService.onStreamEnded(() => {
+        Alert.alert("Stream Stop", "Stream has been stopped");
+        setStreaming(false);
+      });
+      return () => {
+        this.socket?.disconnect({ streamId: user.id });
+      };
+    }, [user]);
 
-    //   return () => {
-    //     this.socket.disconnect({ streamId: user.id });
-    //   };
-    // }, [user]);
+    const handleJoinRoom = (streamId = streamingData?.key) => {
+      socketService.joinStream(streamId);
+    };
 
     const onStream = () => {
       if (!streamingData) {
         handleGoLiveApi();
       } else if (!streaming) {
-        console.log(
-          TAG,
-          "startingStreaming () :",
-          "streamingData",
-          streamingData
-        );
-        ref?.current?.startStreaming(
-          `${streamingData.key}`,
-          "rtmp://13.48.147.251/live/"
-        );
+        ref?.current?.start(`${streamingData.key}`, streamingData?.url);
+        handleJoinRoom();
+        setStreaming(true);
       } else if (streaming) {
-        console.log(
-          TAG,
-          "startingStreaming () :",
-          "streamingData",
-          streamingData
-        );
-        // ref?.current?.startStreaming(
-        //   `${streamingData.key}`,
-        //   setStreamingData.url
-        // );
-        ref?.current?.startStreaming(
-          streamingData.key,
-          "rtmp://13.48.147.251/live"
-        );
+        ref?.current?.stop(streamingData.key, streamingData?.url);
+        setStreaming(true);
+        handleJoinRoom();
       }
     };
 
+    const stopStream = () => {
+      ref.current?.stop();
+      // setStreaming(false);
+      // navigation.goBack();
+      // ref?.current.start();
+    };
     const handleGoLiveApi = async () => {
       try {
         const formData = new FormData();
@@ -176,6 +195,14 @@ class GoLiveController {
       audioProps,
       onPermissionDenied,
       streamingData,
+      torchEnable,
+      setFlash,
+      user,
+      viwers,
+      setViwers,
+      showViewers,
+      setShowViewers,
+      stopStream,
     };
   };
 }

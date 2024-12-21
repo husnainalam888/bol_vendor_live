@@ -42,7 +42,12 @@ const LoginScreen = ({ navigation }) => {
         setEmail("");
         setPassword("");
         navigation.replace("BottomNav");
-        nodePostRequest("auth/vendor/login", respone.data);
+        nodePostRequest("auth/vendor/login", respone.data).then((res) => {
+          setUser({
+            ...respone.data,
+            mongo_id: res.data._id,
+          });
+        });
       } else Alert.alert(respone.message, "Please check your credentials");
     } catch (error) {
       setLoading(false);
