@@ -10,7 +10,7 @@ import {
   View,
   Alert,
 } from "react-native";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ApiVideoLiveStreamView } from "@api.video/react-native-livestream";
 import { SvgFromUri, SvgFromXml } from "react-native-svg";
 import { SVG } from "../../Svgs/SVG";
@@ -25,10 +25,12 @@ import socketService from "../../socket/socket"; // Import the socket service
 import GoLiveController from "../../controllers/GoLiveController";
 import { NodePublisher } from "react-native-nodemediaclient";
 import ViewersModal from "../../Components/ViewersModal";
+import ProductBottomSheet from "../../Components/ProductBottomSheet";
 const GoLive = () => {
   const ref = React.useRef(null);
   const commentRef = React.useRef(null);
   const controller = GoLiveController.useGoLiveController(ref, commentRef);
+  const productSheetRef = React.useRef(null);
   const {
     streamingData,
     streaming,
@@ -61,6 +63,8 @@ const GoLive = () => {
     showViewers,
     setShowViewers,
     stopStream,
+    selectedProducts,
+    setSelectedProducts,
   } = controller;
 
   return (
@@ -108,7 +112,7 @@ const GoLive = () => {
       <NodePublisher
         ref={ref}
         style={styles.liveStreamView}
-        url={`${"rtmp://192.168.195.206:1935/live/" + streamingData?.key}`}
+        url={`${streamingData?.url + "/" + streamingData?.key}`}
         audioParam={{
           codecid: NodePublisher.NMC_CODEC_ID_AAC,
           profile: NodePublisher.NMC_PROFILE_AUTO,
@@ -172,6 +176,14 @@ const GoLive = () => {
 
       {!streaming ? (
         <>
+          <Text
+            onPress={() => productSheetRef?.current?.open()}
+            style={styles.products}
+          >
+            {selectedProducts?.length > 0
+              ? `${selectedProducts.length} Product Selected`
+              : "Select Products"}
+          </Text>
           <ImagePicker selected={thumbnail?.uri} onSelect={setThumbnail} />
           <TextInput
             style={styles.heading}
@@ -189,6 +201,11 @@ const GoLive = () => {
             multiline
             onChangeText={setDescription}
             placeholder="Write a description of your live stream here"
+          />
+          <ProductBottomSheet
+            selectedProducts={selectedProducts}
+            setSelectedProducts={setSelectedProducts}
+            ref={productSheetRef}
           />
         </>
       ) : (
@@ -419,5 +436,14 @@ const styles = StyleSheet.create({
   },
   stopButtonTitle: {
     color: "white",
+  },
+  products: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    textAlign: "center",
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    color: "white",
+    borderColor: "white",
   },
 });

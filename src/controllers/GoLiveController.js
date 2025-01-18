@@ -34,6 +34,8 @@ class GoLiveController {
     const [comments, setComments] = useState([]);
     const [streamingData, setStreamingData] = useState(null);
     const [viwers, setViwers] = useState([]);
+    const [selectedProducts, setSelectedProducts] = useState([]);
+
     const videoProps = {
       fps: 30,
       resolution: "720p",
@@ -93,6 +95,7 @@ class GoLiveController {
         handleGoLiveApi();
       } else if (!streaming) {
         ref?.current?.start(`${streamingData.key}`, streamingData?.url);
+        console.log("test", `${streamingData.key}`, streamingData?.url);
         handleJoinRoom();
         setStreaming(true);
       } else if (streaming) {
@@ -114,6 +117,9 @@ class GoLiveController {
         formData.append("id", user.id);
         formData.append("title", title);
         formData.append("description", description);
+        selectedProducts?.forEach((e, i) => {
+          formData.append(`products[${i}]`, e);
+        });
         formData.append("thumbnail", {
           name: "image",
           type: "image/jpeg",
@@ -203,6 +209,8 @@ class GoLiveController {
       showViewers,
       setShowViewers,
       stopStream,
+      selectedProducts,
+      setSelectedProducts,
     };
   };
 }

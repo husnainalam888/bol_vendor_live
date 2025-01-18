@@ -8,95 +8,97 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import React, {Children, useEffect, useState} from 'react';
-import Container from '../../Components/Container';
-import OrderStatusList from '../../Components/OrderStatusList';
-import {IMAGE_B_URL, getRequest, postRequest} from '../../Utils/API';
-import {useMMKVStorage} from 'react-native-mmkv-storage';
-import {global_storage} from '../../Utils/Utils';
-import {SvgFromXml} from 'react-native-svg';
-import {SVG} from '../../Svgs/SVG';
-import {useNavigation} from '@react-navigation/native';
-import Button from '../../Components/Button';
-import Shadow from '../../Components/Shadow';
-const Dashboard = ({navigation}: any) => {
+} from "react-native";
+import React, { Children, useEffect, useState } from "react";
+import Container from "../../Components/Container";
+import OrderStatusList from "../../Components/OrderStatusList";
+import { IMAGE_B_URL, getRequest, postRequest } from "../../Utils/API";
+import { useMMKVStorage } from "react-native-mmkv-storage";
+import { global_storage } from "../../Utils/Utils";
+import { SvgFromXml } from "react-native-svg";
+import { SVG } from "../../Svgs/SVG";
+import { useNavigation } from "@react-navigation/native";
+import Button from "../../Components/Button";
+import Shadow from "../../Components/Shadow";
+const Dashboard = ({ navigation }: any) => {
   const [isLoading, setIsloading] = useState(false);
-  const [user, setUser] = useMMKVStorage('USER', global_storage, {});
+  const [user, setUser] = useMMKVStorage("USER", global_storage, {});
   const [dashboard, setDashboard] = useMMKVStorage(
-    'dashboard',
+    "dashboard",
     global_storage,
-    {},
+    {}
   );
   const [data, setData] = useState([
     {
-      type: 'Assigned',
+      type: "Assigned",
       count: dashboard?.assigned,
     },
     {
-      type: 'Delivered',
+      type: "Delivered",
       count: dashboard?.completed,
     },
     {
-      type: 'Picked',
+      type: "Picked",
       count: dashboard?.picked,
     },
     {
-      type: 'Rejected',
+      type: "Rejected",
       count: dashboard?.rejected,
     },
   ]);
   useEffect(() => {
-    console.log(TAG, 'UseEffect():');
+    console.log(TAG, "UseEffect():");
     get_dashboard();
   }, []);
-  const TAG = 'Dashboard.js';
+  const TAG = "Dashboard.js";
   const get_dashboard = async () => {
     try {
       setIsloading(true);
       const respone = await postRequest(`dashboard/${user.id}`);
       setIsloading(false);
-      console.log(TAG, 'get_dashboard(): response :', respone.data.orders[0]);
+      console.log(TAG, "get_dashboard(): response :", respone.data.orders[0]);
       setDashboard(respone.data);
       const dashboard = respone.data;
       setData([
         {
-          type: 'Assigned',
+          type: "Assigned",
           count: dashboard?.assigned,
         },
         {
-          type: 'Delivered',
+          type: "Delivered",
           count: dashboard?.completed,
         },
         {
-          type: 'Picked',
+          type: "Picked",
           count: dashboard?.picked,
         },
         {
-          type: 'Rejected',
+          type: "Rejected",
           count: dashboard?.rejected,
         },
       ]);
     } catch (error) {
       setIsloading(false);
-      console.log(TAG, 'Get_Dashboard() :', error);
+      console.log(TAG, "Get_Dashboard() :", error);
     }
   };
   return (
-    <View style={{flex: 1, backgroundColor: '#f5f5f5'}}>
+    <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
       <Header />
       <Container
         onRefresh={() => {
           get_dashboard();
         }}
         isLoading={isLoading}
-        style={{paddingVertical: 0, backgroundColor: '#f5f5f5'}}>
+        style={{ paddingVertical: 0, backgroundColor: "#f5f5f5" }}
+      >
         <OrderStatusList data={data} />
         <View style={styles.labelRow}>
           <Text style={styles.label}>New Orders</Text>
           <Text
-            onPress={() => navigation.navigate('Orders')}
-            style={styles.seeAll}>
+            onPress={() => navigation.navigate("Orders")}
+            style={styles.seeAll}
+          >
             See All
           </Text>
         </View>
@@ -115,11 +117,11 @@ const Header = () => {
   );
 };
 
-export const OrderList = ({data, contentContainerStyle}: any) => {
+export const OrderList = ({ data, contentContainerStyle }: any) => {
   const navigation = useNavigation();
   const [list, setList] = useState(data);
   useEffect(() => {
-    console.log('OrderList() :', data);
+    console.log("OrderList() :", data);
     setList(data);
   }, [data]);
   return (
@@ -127,17 +129,17 @@ export const OrderList = ({data, contentContainerStyle}: any) => {
       contentContainerStyle={contentContainerStyle}
       data={list}
       extraData={list}
-      renderItem={({item}) => {
+      renderItem={({ item }) => {
         return <OrderItem item={item} />;
       }}
     />
   );
 };
-export const OrderItem = ({item, onPress, showOrderItems = false, style}) => {
+export const OrderItem = ({ item, onPress, showOrderItems = false, style }) => {
   const navigation = useNavigation();
   const [order_item, setOrder_item] = useState(item?.order_item || []);
   useEffect(() => {
-    console.warn('oeder item', 'UseEffect():');
+    console.warn("oeder item", "UseEffect():");
     setOrder_item(item?.order_item || []);
   }, [item]);
   return (
@@ -145,42 +147,44 @@ export const OrderItem = ({item, onPress, showOrderItems = false, style}) => {
     <View>
       <Pressable
         onPress={() => {
-          if (!onPress) navigation.navigate('OrderDetails', {order: item});
+          if (!onPress) navigation.navigate("OrderDetails", { order: item });
         }}
         style={[
           styles.orderItem_item,
-          showOrderItems && {paddingHorizontal: 0},
-          {elevation: 1},
+          showOrderItems && { paddingHorizontal: 0 },
+          { elevation: 1 },
           style,
-        ]}>
-        <Row title={'Order number :'} value={`#${item.order_no}`} />
+        ]}
+      >
+        <Row title={"Order number :"} value={`#${item.order_no}`} />
         <Row
-          title={'Customer :'}
-          value={item.customer.first_name + ' ' + item.customer.last_name}
+          title={"Customer :"}
+          value={item.customer.first_name + " " + item.customer.last_name}
         />
         <Row
-          title={'Items :'}
+          title={"Items :"}
           round={true}
           value={`${item.order_item.length}`}
         />
         {showOrderItems && (
           <View>
-            <Text style={{color: 'black', fontWeight: 'bold', fontSize: 16}}>
+            <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>
               Order Items
             </Text>
             <ItemList data={order_item} onPress={onPress} />
           </View>
         )}
-        <Row title={'Total Bill :'} value={`$${item.total}`} bold={true} />
+        <Row title={"Total Bill :"} value={`$${item.total}`} bold={true} />
         {showOrderItems != true && (
           <Button
             onPress={() => {
-              if (!onPress) navigation.navigate('OrderDetails', {order: item});
+              if (!onPress)
+                navigation.navigate("OrderDetails", { order: item });
             }}
-            title={'View Details'}
+            title={"View Details"}
           />
         )}
-        <Text style={[styles.regular, {marginTop: 16}]}>
+        <Text style={[styles.regular, { marginTop: 16 }]}>
           {new Date(item.created_at).toLocaleDateString()}
         </Text>
       </Pressable>
@@ -188,83 +192,89 @@ export const OrderItem = ({item, onPress, showOrderItems = false, style}) => {
     // </Shadow>
   );
 };
-export const ItemList = ({data, onPress}: any) => {
+export const ItemList = ({ data, onPress }: any) => {
   useEffect(() => {
-    console.log('ItemList', 'UseEffect(): changed', data);
+    console.log("ItemList", "UseEffect(): changed", data);
   }, [data]);
   return (
     <FlatList
-      style={{marginVertical: 10}}
+      style={{ marginVertical: 10 }}
       data={data}
       extraData={data}
-      renderItem={({item}) => {
+      renderItem={({ item }) => {
         return (
           <Shadow>
             <View
               style={[
                 styles.orderItem_item,
-                {padding: 16, borderWidth: 1, borderColor: '#f3f3f3'},
-              ]}>
-              <View style={{flexDirection: 'row'}}>
+                { padding: 16, borderWidth: 1, borderColor: "#f3f3f3" },
+              ]}
+            >
+              <View style={{ flexDirection: "row" }}>
                 <Image
                   resizeMode="contain"
-                  source={{uri: IMAGE_B_URL + item.product_image}}
+                  source={{ uri: IMAGE_B_URL + item.product_image }}
                   style={styles.itemImage}
                 />
-                <View style={{flex: 1}}>
+                <View style={{ flex: 1 }}>
                   <Row
-                    style={{padding: 6, marginBottom: 8}}
+                    style={{ padding: 6, marginBottom: 8 }}
                     title={item.name}
                   />
                   <Row
-                    style={{padding: 6, marginBottom: 8}}
-                    value={'Item ID : ' + item.id}
+                    style={{ padding: 6, marginBottom: 8 }}
+                    value={"Item ID : " + item.id}
                   />
                   <Row
-                    style={{padding: 6, marginBottom: 8}}
-                    value={'Qty : ' + item.quantity}
+                    style={{ padding: 6, marginBottom: 8 }}
+                    value={"Qty : " + item.quantity}
                   />
                   <Row
-                    style={{padding: 6, marginBottom: 8}}
-                    value={'Status : ' + item.status}
+                    style={{ padding: 6, marginBottom: 8 }}
+                    value={"Status : " + item.status}
                   />
                   <Row
-                    title={'Price : $' + item.price}
-                    style={{marginBottom: 0, padding: 8}}
+                    title={"Price : $" + item.price}
+                    style={{ marginBottom: 0, padding: 8 }}
                   />
                 </View>
               </View>
-              {item?.status == 'accepted' && (
+              {item?.status == "accepted" && (
                 <Button
-                  title={'Ready'}
-                  onPress={() => onPress(item.id, 'ready')}
-                  style={{marginTop: 24, borderRadius: 30, paddingVertical: 12}}
+                  title={"Ready"}
+                  onPress={() => onPress(item.id, "ready")}
+                  style={{
+                    marginTop: 24,
+                    borderRadius: 30,
+                    paddingVertical: 12,
+                  }}
                 />
               )}
-              {item?.status == 'pending' && (
+              {item?.status == "pending" && (
                 <View
                   style={{
-                    flexDirection: 'row',
+                    flexDirection: "row",
                     marginTop: 24,
-                    alignItems: 'center',
-                  }}>
+                    alignItems: "center",
+                  }}
+                >
                   <Button
-                    title={'Reject'}
-                    onPress={() => onPress(item.id, 'rejected')}
+                    title={"Reject"}
+                    onPress={() => onPress(item.id, "rejected")}
                     style={{
                       borderRadius: 30,
                       paddingVertical: 10,
                       borderWidth: 1,
-                      backgroundColor: 'white',
+                      backgroundColor: "white",
                     }}
                     titleStyle={{
-                      color: 'black',
+                      color: "black",
                       fontSize: 12,
                     }}
                   />
                   <Button
-                    title={'Accept'}
-                    onPress={() => onPress(item.id, 'accepted')}
+                    title={"Accept"}
+                    onPress={() => onPress(item.id, "accepted")}
                     style={{
                       borderRadius: 30,
                       paddingVertical: 12,
@@ -282,7 +292,7 @@ export const ItemList = ({data, onPress}: any) => {
   );
 };
 
-export const Row = ({title, value, bold, round, style}: any) => {
+export const Row = ({ title, value, bold, round, style }: any) => {
   return (
     <View style={[styles.row, style]}>
       {title && (
@@ -294,92 +304,129 @@ export const Row = ({title, value, bold, round, style}: any) => {
         numberOfLines={1}
         style={[
           styles.regular,
-          (bold || round) && {fontWeight: 'bold'},
+          (bold || round) && { fontWeight: "bold" },
           round && {
-            backgroundColor: 'black',
-            color: 'white',
+            backgroundColor: "black",
+            color: "white",
             borderRadius: 40,
             paddingHorizontal: 10,
             paddingVertical: 4,
           },
-        ]}>
+        ]}
+      >
         {value}
       </Text>
     </View>
   );
 };
-export const ProductItem = ({item, onDelete}: any) => {
+export const ProductItem = ({ item, onDelete, onSelect, selected }: any) => {
   const navigation = useNavigation();
   return (
     // <Shadow>
     <View
       style={[
         styles.orderItem_item,
-        {padding: 16, borderWidth: 1, borderColor: '#f3f3f3', elevation: 1},
-      ]}>
-      <View style={{flexDirection: 'row'}}>
+        { padding: 16, borderWidth: 1, borderColor: "#f3f3f3", elevation: 1 },
+      ]}
+    >
+      <View style={{ flexDirection: "row" }}>
         <Image
           resizeMode="contain"
           source={{
             uri: item?.product_image?.[0]?.image
               ? IMAGE_B_URL + item?.product_image?.[0]?.image
-              : 'https://feb.kuleuven.be/drc/LEER/visiting-scholars-1/image-not-available.jpg/image',
+              : "https://feb.kuleuven.be/drc/LEER/visiting-scholars-1/image-not-available.jpg/image",
           }}
           style={styles.itemImage}
         />
-        <View style={{flex: 1}}>
-          <Row style={{padding: 6, marginBottom: 8}} title={item.name} />
+        <View style={{ flex: 1 }}>
+          <Row style={{ padding: 6, marginBottom: 8 }} title={item.name} />
           <Row
-            style={{padding: 6, marginBottom: 8}}
-            value={'Condition : ' + item.condition}
+            style={{ padding: 6, marginBottom: 8 }}
+            value={"Condition : " + item.condition}
           />
           <Row
-            style={{padding: 6, marginBottom: 8}}
-            value={'Stock Qty : ' + item.stock_quantity}
+            style={{ padding: 6, marginBottom: 8 }}
+            value={"Stock Qty : " + item.stock_quantity}
           />
           <Row
-            value={'Delivery Time :' + item.delivery_time}
-            style={{marginBottom: 8, padding: 8}}
+            value={"Delivery Time :" + item.delivery_time}
+            style={{ marginBottom: 8, padding: 8 }}
           />
           <Row
-            title={'Sales Price :' + item.sales_price}
-            style={{marginBottom: 0, padding: 8}}
+            title={"Sales Price :" + item.sales_price}
+            style={{ marginBottom: 0, padding: 8 }}
           />
         </View>
       </View>
 
       <View
         style={{
-          flexDirection: 'row-reverse',
+          flexDirection: "row-reverse",
           marginTop: 24,
-          alignItems: 'center',
-        }}>
-        <Button
-          title={'Delete'}
-          onPress={() => {
-            if (onDelete) onDelete(item.id);
-          }}
-          style={{
-            borderRadius: 30,
-            paddingVertical: 10,
-            borderWidth: 1,
-            backgroundColor: 'white',
-          }}
-          titleStyle={{
-            color: 'black',
-            fontSize: 12,
-          }}
-        />
-        <Button
-          title={'Edit'}
-          onPress={() => navigation.navigate('AddProduct', {item})}
-          style={{
-            borderRadius: 30,
-            paddingVertical: 12,
-            flex: 1,
-            marginEnd: 16,
-          }}
-        />
+          alignItems: "center",
+        }}
+      >
+        {!onSelect && (
+          <>
+            <Button
+              title={"Delete"}
+              onPress={() => {
+                if (onDelete) onDelete(item.id);
+              }}
+              style={{
+                borderRadius: 30,
+                paddingVertical: 10,
+                borderWidth: 1,
+                backgroundColor: "white",
+              }}
+              titleStyle={{
+                color: "black",
+                fontSize: 12,
+              }}
+            />
+            <Button
+              title={"Edit"}
+              onPress={() => navigation.navigate("AddProduct", { item })}
+              style={{
+                borderRadius: 30,
+                paddingVertical: 12,
+                flex: 1,
+                marginEnd: 16,
+              }}
+            />
+          </>
+        )}
+        {onSelect && (
+          <Button
+            title={selected ? "Selected" : "Tap To Select"}
+            onPress={() => {
+              if (onSelect) onSelect(item.id);
+            }}
+            style={[
+              {
+                borderRadius: 30,
+                paddingVertical: 10,
+                borderWidth: 1,
+                backgroundColor: "white",
+                flex: 1,
+              },
+              selected && {
+                color: "white",
+                backgroundColor: "black",
+              },
+            ]}
+            titleStyle={[
+              {
+                color: "black",
+                fontSize: 12,
+              },
+              selected && {
+                color: "white",
+              },
+            ]}
+          />
+        )}
       </View>
     </View>
     // </Shadow>
@@ -390,88 +437,88 @@ export default Dashboard;
 const styles = StyleSheet.create({
   header: {
     paddingVertical: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'black',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "black",
     marginHorizontal: 0,
     paddingHorizontal: 16,
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white",
   },
   label: {
-    color: 'black',
+    color: "black",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   orderItem_item: {
     borderRadius: 8,
     padding: 10,
     marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   item_id: {
-    color: 'black',
-    fontWeight: 'bold',
+    color: "black",
+    fontWeight: "bold",
   },
   itemImage: {
     // height: 110,
     width: 110,
     marginEnd: 16,
-    backgroundColor: '#f3f3f3',
+    backgroundColor: "#f3f3f3",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   item_name: {
-    color: 'black',
-    fontWeight: '500',
-    textAlign: 'justify',
+    color: "black",
+    fontWeight: "500",
+    textAlign: "justify",
     marginVertical: 10,
   },
   qty: {
-    color: 'grey',
+    color: "grey",
   },
   divider: {
     height: 1,
-    backgroundColor: '#f3f3f3',
+    backgroundColor: "#f3f3f3",
     marginBottom: 10,
   },
   orderItem: {
     borderWidth: 1,
-    borderColor: '#f3f3f3',
+    borderColor: "#f3f3f3",
     borderRadius: 8,
     padding: 10,
   },
   customer_name: {
     fontSize: 14,
-    color: 'black',
-    fontWeight: 'bold',
+    color: "black",
+    fontWeight: "bold",
   },
   btnText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
   },
   labelRow: {
-    justifyContent: 'space-between',
-    flexDirection: 'row',
+    justifyContent: "space-between",
+    flexDirection: "row",
     marginTop: 32,
     marginBottom: 16,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
-    backgroundColor: '#F6F6F6',
+    backgroundColor: "#F6F6F6",
     padding: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   bold: {
-    color: 'black',
-    fontWeight: 'bold',
+    color: "black",
+    fontWeight: "bold",
     flex: 1,
   },
-  regular: {color: 'black'},
+  regular: { color: "black" },
 });

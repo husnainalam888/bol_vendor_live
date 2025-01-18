@@ -4,7 +4,7 @@ const BASE_URL =
 export const IMAGE_B_URL =
   "https://multivendor.freelancedemo.site/apis/public/images/";
 
-export const NODE_URL = "http://13.48.147.251:3000/";
+export const NODE_URL = "http://13.60.169.86:3000/";
 const nodeGetRequest = async (endPoint: string) => {
   try {
     const headers: any = {

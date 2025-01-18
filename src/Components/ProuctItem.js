@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   Image,
   FlatList,
   TouchableOpacity,
-} from 'react-native';
-import {IMAGE_B_URL} from '../Utils/API';
-import {SvgFromXml} from 'react-native-svg';
-import {SVG} from '../Svgs/SVG';
-import {ProductItem} from '../Screens/Tabs/Dashboard';
+} from "react-native";
+import { IMAGE_B_URL } from "../Utils/API";
+import { SvgFromXml } from "react-native-svg";
+import { SVG } from "../Svgs/SVG";
+import { ProductItem } from "../Screens/Tabs/Dashboard";
 
 // const ProductItem = ({product}) => {
 //   return (
@@ -52,11 +52,26 @@ import {ProductItem} from '../Screens/Tabs/Dashboard';
 //   );
 // };
 
-export const ProductList = ({data, onDelete}) => {
+export const ProductList = ({ data, onDelete, selectedProducts, onSelect }) => {
   return (
     <FlatList
       data={data}
-      renderItem={({item}) => <ProductItem item={item} onDelete={onDelete} />}
+      renderItem={({ item }) => (
+        <ProductItem
+          item={item}
+          onDelete={onDelete}
+          selected={
+            selectedProducts?.length > 0 && selectedProducts?.includes(item?.id)
+          }
+          onSelect={
+            onSelect
+              ? () => {
+                  onSelect(item);
+                }
+              : false
+          }
+        />
+      )}
     />
   );
 };
@@ -66,23 +81,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     marginBottom: 16,
     borderRadius: 10,
   },
   productImage: {
     width: 80,
     marginRight: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   detailsContainer: {
     flex: 1,
   },
   productName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 5,
-    color: 'black',
+    color: "black",
   },
   productDescription: {
     fontSize: 14,
@@ -90,23 +105,23 @@ const styles = StyleSheet.create({
   },
   border: {
     height: 1,
-    backgroundColor: '#f1f1f1',
+    backgroundColor: "#f1f1f1",
     marginVertical: 5,
   },
   btn: {
     flex: 1,
-    backgroundColor: '#f3f3f3',
+    backgroundColor: "#f3f3f3",
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderRadius: 4,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginVertical: 4,
   },
   btnText: {
-    textAlign: 'center',
-    color: 'white',
+    textAlign: "center",
+    color: "white",
     marginStart: 4,
   },
 });

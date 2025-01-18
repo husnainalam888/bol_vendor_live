@@ -1,16 +1,16 @@
-import React, {useRef, useState} from 'react';
-import {View, Button, StyleSheet, FlatList, Text} from 'react-native';
-import RBSheet from 'react-native-raw-bottom-sheet';
-import Input from './Input';
+import React, { useRef, useState } from "react";
+import { View, Button, StyleSheet, FlatList, Text } from "react-native";
+import RBSheet from "react-native-raw-bottom-sheet";
+import Input from "./Input";
 
-const BottomMenu = ({label, style, placeholder, value, data, onChange}) => {
+const BottomMenu = ({ label, style, placeholder, value, data, onChange }) => {
   const refRBSheet = useRef();
   const [selected, setSelected] = useState(null);
   return (
     <View style={styles.container}>
       <Input
         label={label}
-        style={[{marginBottom: 16}, style]}
+        style={[{ marginBottom: 16 }, style]}
         editable={false}
         onPress={() => refRBSheet.current.open()}
         placeholder={placeholder}
@@ -19,12 +19,15 @@ const BottomMenu = ({label, style, placeholder, value, data, onChange}) => {
       <RBSheet
         ref={refRBSheet}
         closeOnDragDown={true}
-        closeOnPressMask={false}
-        customStyles={bottomSheetStyles}>
+        closeOnPressMask={true}
+        height={400}
+        customStyles={bottomSheetStyles}
+      >
         <FlatList
           data={data}
-          style={{marginBottom: 40}}
-          renderItem={({item}) => (
+          style={{ marginBottom: 40, paddingTop: 20 }}
+          contentContainerStyle={{ gap: 16 }}
+          renderItem={({ item }) => (
             <Text
               onPress={() => {
                 onChange(item);
@@ -34,10 +37,11 @@ const BottomMenu = ({label, style, placeholder, value, data, onChange}) => {
               style={[
                 styles.item,
                 selected?.id == item.id && {
-                  backgroundColor: 'black',
-                  color: 'white',
+                  backgroundColor: "black",
+                  color: "white",
                 },
-              ]}>
+              ]}
+            >
               {item.name}
             </Text>
           )}
@@ -49,13 +53,13 @@ const BottomMenu = ({label, style, placeholder, value, data, onChange}) => {
 
 const bottomSheetStyles = {
   wrapper: {
-    backgroundColor: '#0000005f',
+    backgroundColor: "#0000005f",
   },
   draggableIcon: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
   },
   container: {
-    height: 'auto',
+    height: "auto",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     elevation: 2,
@@ -64,13 +68,13 @@ const bottomSheetStyles = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   item: {
     padding: 10,
     fontSize: 14,
-    backgroundColor: '#f3f3f3',
-    color: 'black',
+    backgroundColor: "#f3f3f3",
+    color: "black",
     marginHorizontal: 20,
     borderRadius: 5,
   },
